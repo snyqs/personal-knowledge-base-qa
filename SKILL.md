@@ -4,6 +4,8 @@
 
 本技能提供端侧私人知识库智能问答功能，支持PDF、DOCX、PPTX、XLSX等多种文档格式的上传、解析和智能问答。用户可以通过Web界面上传文档，系统自动解析为Markdown格式并建立索引，然后通过智能问答功能检索相关内容并生成回答。
 
+**来源地址**: https://github.com/snyqs/personal-knowledge-base-qa
+
 ## 功能特性
 
 - **文档上传**：支持PDF、DOCX、PPTX、XLSX格式文档上传
