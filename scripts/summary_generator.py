@@ -1,4 +1,10 @@
+import os
+import sys
 from typing import Optional
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
 
 class RuleBasedSummaryGenerator:
@@ -38,7 +44,7 @@ class SummaryGenerator:
         self.llm_service = None
         
         if use_llm:
-            from .llm_service import LLMSummaryService
+            from llm_service import LLMSummaryService
             self.llm_service = LLMSummaryService()
 
     def generate(self, content: str, max_length: int = 200) -> str:

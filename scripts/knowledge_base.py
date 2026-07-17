@@ -115,6 +115,45 @@ class KnowledgeBase:
         
         return summary
 
+    def _search_by_keywords(self, keywords: list) -> list:
+        matched_files = []
+        keyword_set = set([k.lower() for k in keywords if k.strip()])
+        
+        if not keyword_set:
+            return matched_files
+        
+        for root, dirs, files in os.walk(self.user_data_path):
+            for file in files:
+                if file.endswith('.md'):
+                    file_path = os.path.join(root, file)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read().lower()
+                        
+                        match_count = 0
+                        for kw in keyword_set:
+                            if kw in content:
+                                match_count += content.count(kw)
+                        
+                        if match_count > 0:
+                            relative_path = os.path.relpath(file_path, self.user_data_path).replace('\\', '/')
+                            ext = relative_path.split('/')[0]
+                            original_filename = os.path.splitext(file)[0]
+                            original_ext = {
+                                'pdf': '.pdf',
+                                'docx': '.docx',
+                                'pptx': '.pptx',
+                                'xlsx': '.xlsx'
+                            }.get(ext, '.md')
+                            file_path_in_index = f"{ext}/{original_filename}{original_ext}"
+                            matched_files.append((file_path_in_index, match_count))
+                    except Exception as e:
+                        print(f"读取文件失败 {file_path}: {str(e)}")
+        
+        matched_files.sort(key=lambda x: x[1], reverse=True)
+        
+        return [f[0] for f in matched_files[:5]]
+
     def smart_ask(self, question: str) -> Dict:
         index_path = os.path.join(self.user_data_path, "index.md")
         if not os.path.exists(index_path):
@@ -129,6 +168,14 @@ class KnowledgeBase:
             index_content = f.read()
         
         selected_files = self.llm_service.select_relevant_files(index_content, question)
+        
+        if not selected_files:
+            keywords = self.llm_service.extract_keywords(question, index_content)
+            print(f"LLM文件选择失败，使用关键词检索: {keywords}")
+            
+            if keywords:
+                selected_files = self._search_by_keywords(keywords)
+                print(f"关键词检索结果: {selected_files}")
         
         if not selected_files:
             return {

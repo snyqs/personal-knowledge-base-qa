@@ -139,6 +139,59 @@ class LLMSummaryService:
             print(f"LLM文件选择失败: {str(e)}")
             return []
 
+    def extract_keywords(self, question: str, index_content: str) -> list:
+        if not self.use_ollama or not self._ollama_available:
+            return []
+        
+        prompt = f"""你是一个关键词提取助手。请分析用户的问题，从以下文档索引中提取3个最相关的关键词或数据。
+如果索引中没有明显相关的内容，请根据问题本身提取3个核心关键词。
+
+文档索引内容：
+{index_content[:5000]}
+
+用户问题：{question}
+
+请严格按照JSON格式返回，不要包含任何其他文本：
+{{"keywords": ["关键词1", "关键词2", "关键词3"]}}
+
+注意：
+1. 关键词应该是名词或短语，能够帮助检索文档内容
+2. 如果无法提取，请返回空数组 []"""
+        
+        data = {
+            "model": self.model_name,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "temperature": 0.3,
+                "max_tokens": 100
+            }
+        }
+        
+        try:
+            req = urllib.request.Request(
+                f"{self.base_url}/api/generate",
+                data=json.dumps(data).encode('utf-8'),
+                headers={"Content-Type": "application/json"}
+            )
+            
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                response = json.loads(resp.read().decode('utf-8'))
+                result = response.get('response', '').strip()
+            
+            result = result.replace('```json', '').replace('```', '').strip()
+            parsed = json.loads(result)
+            
+            if isinstance(parsed, dict):
+                return parsed.get('keywords', [])
+            elif isinstance(parsed, list):
+                return parsed[:3]
+            else:
+                return []
+        except Exception as e:
+            print(f"LLM关键词提取失败: {str(e)}")
+            return []
+
     def generate_answer(self, question: str, context: str) -> str:
         if not self.use_ollama or not self._ollama_available:
             return f"根据检索到的内容，关于'{question}'的信息如下：\n{context[:500]}"

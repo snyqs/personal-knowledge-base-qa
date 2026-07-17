@@ -1,5 +1,6 @@
 import os
 import sys
+import unicodedata
 from typing import Optional
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -7,6 +8,14 @@ if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
 from parsers import PDFParser, DOCXParser, PPTXParser, XLSXParser
+
+
+def normalize_filename(filename: str) -> str:
+    filename = unicodedata.normalize('NFKC', filename)
+    filename = filename.replace('\\', '_').replace('/', '_').replace(':', '_')
+    filename = filename.replace('*', '_').replace('?', '_').replace('"', '_')
+    filename = filename.replace('<', '_').replace('>', '_').replace('|', '_')
+    return filename
 
 
 class DocumentProcessor:
@@ -36,6 +45,7 @@ class DocumentProcessor:
         md_content = parser.parse(file_path)
         
         filename = os.path.basename(file_path)
+        filename = normalize_filename(filename)
         md_filename = f"{os.path.splitext(filename)[0]}.md"
         dir_name = ext[1:]
         save_path = os.path.join(self.user_data_path, dir_name, md_filename)
