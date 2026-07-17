@@ -141,7 +141,7 @@ class LLMSummaryService:
 
     def extract_keywords(self, question: str, index_content: str) -> list:
         if not self.use_ollama or not self._ollama_available:
-            return []
+            return self._rule_based_keywords(question)
         
         prompt = f"""你是一个关键词提取助手。请分析用户的问题，从以下文档索引中提取3个最相关的关键词或数据。
 如果索引中没有明显相关的内容，请根据问题本身提取3个核心关键词。
@@ -183,14 +183,35 @@ class LLMSummaryService:
             parsed = json.loads(result)
             
             if isinstance(parsed, dict):
-                return parsed.get('keywords', [])
+                keywords = parsed.get('keywords', [])
+                if keywords:
+                    return keywords
             elif isinstance(parsed, list):
-                return parsed[:3]
-            else:
-                return []
+                if parsed:
+                    return parsed[:3]
+            
+            return self._rule_based_keywords(question)
         except Exception as e:
-            print(f"LLM关键词提取失败: {str(e)}")
-            return []
+            print(f"LLM关键词提取失败，使用规则式提取: {str(e)}")
+            return self._rule_based_keywords(question)
+    
+    def _rule_based_keywords(self, question: str) -> list:
+        keywords = []
+        chinese_keywords = []
+        
+        import re
+        words = re.findall(r'[\u4e00-\u9fff]{2,}', question)
+        chinese_keywords.extend(words)
+        
+        english_words = re.findall(r'[a-zA-Z][a-zA-Z0-9_.-]*[a-zA-Z0-9]', question)
+        english_words = [w for w in english_words if len(w) >= 3]
+        chinese_keywords.extend(english_words)
+        
+        for kw in chinese_keywords[:5]:
+            if kw not in keywords:
+                keywords.append(kw)
+        
+        return keywords[:3]
 
     def generate_answer(self, question: str, context: str) -> str:
         if not self.use_ollama or not self._ollama_available:
