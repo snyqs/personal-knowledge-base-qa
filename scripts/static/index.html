@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私人知识库智能问答系统</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>私人知识库智能问答系统</h1>
+            <p class="subtitle">上传文档，智能问答</p>
+        </header>
+
+        <main>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="upload">文档上传</button>
+                <button class="tab-btn" data-tab="qa">智能问答</button>
+                <button class="tab-btn" data-tab="documents">文档列表</button>
+            </div>
+
+            <div class="tab-content active" id="upload-tab">
+                <div class="upload-area">
+                    <div class="upload-box" id="drop-zone">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <p>拖拽文件到此处或点击上传</p>
+                        <p class="file-types">支持: PDF, DOCX, PPTX, XLSX</p>
+                        <input type="file" id="file-input" accept=".pdf,.docx,.pptx,.xlsx" hidden>
+                    </div>
+                    <div class="upload-status" id="upload-status"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="qa-tab">
+                <div class="qa-area">
+                    <div class="chat-container" id="chat-container">
+                        <div class="welcome-message">
+                            <p>欢迎使用私人知识库智能问答系统！</p>
+                            <p>请输入您的问题，系统将从知识库中检索相关内容并为您解答。</p>
+                        </div>
+                    </div>
+                    <div class="input-area">
+                        <input type="text" id="question-input" placeholder="请输入您的问题..." />
+                        <button id="ask-btn">发送</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="documents-tab">
+                <div class="documents-area">
+                    <div class="toolbar">
+                        <input type="text" id="search-input" placeholder="搜索文档..." />
+                        <button id="search-btn">搜索</button>
+                        <button id="refresh-btn">刷新列表</button>
+                        <button id="rebuild-btn" class="danger">重建索引</button>
+                    </div>
+                    <div class="documents-list" id="documents-list">
+                        <p class="loading">加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>私人知识库智能问答系统 v1.0.0 | 基于Ollama + qwen2:7b</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    text-align: center;
+    padding: 30px 0;
+    color: white;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+header .subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+main {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    flex: 1;
+    overflow: hidden;
+}
+
+.tabs {
+    display: flex;
+    background: #f5f7fa;
+    border-bottom: 1px solid #e1e5eb;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 18px 30px;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tab-btn:hover {
+    color: #667eea;
+    background: #f0f2f5;
+}
+
+.tab-btn.active {
+    color: #667eea;
+    background: white;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.tab-content {
+    display: none;
+    padding: 30px;
+    min-height: 500px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.upload-box {
+    width: 100%;
+    max-width: 600px;
+    padding: 60px 40px;
+    border: 3px dashed #d1d5db;
+    border-radius: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f9fafb;
+}
+
+.upload-box:hover,
+.upload-box.dragover {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.upload-icon {
+    width: 80px;
+    height: 80px;
+    color: #9ca3af;
+    margin-bottom: 20px;
+}
+
+.upload-box:hover .upload-icon {
+    color: #667eea;
+}
+
+.upload-box p {
+    font-size: 1.1rem;
+    color: #6b7280;
+    margin-bottom: 10px;
+}
+
+.file-types {
+    font-size: 0.9rem;
+    color: #9ca3af;
+}
+
+.upload-status {
+    width: 100%;
+    max-width: 600px;
+}
+
+.status-message {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+.status-message.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.qa-area {
+    display: flex;
+    flex-direction: column;
+    height: 500px;
+}
+
+.chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    border: 1px solid #e1e5eb;
+    border-radius: 12px;
+    background: #f9fafb;
+    margin-bottom: 15px;
+}
+
+.welcome-message {
+    text-align: center;
+    color: #6b7280;
+    padding: 40px;
+}
+
+.welcome-message p {
+    margin-bottom: 10px;
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 15px 20px;
+    border-radius: 12px;
+    max-width: 80%;
+}
+
+.message.user {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-left: auto;
+}
+
+.message.system {
+    background: white;
+    border: 1px solid #e1e5eb;
+    color: #333;
+}
+
+.message p {
+    margin-bottom: 10px;
+}
+
+.message p:last-child {
+    margin-bottom: 0;
+}
+
+.sources {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e1e5eb;
+}
+
+.source-item {
+    background: #f3f4f6;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+    font-size: 0.9rem;
+}
+
+.source-item strong {
+    color: #667eea;
+}
+
+.input-area {
+    display: flex;
+    gap: 10px;
+}
+
+.input-area input {
+    flex: 1;
+    padding: 15px 20px;
+    border: 2px solid #e1e5eb;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.input-area input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.input-area button {
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.input-area button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.documents-area {
+    height: 100%;
+}
+
+.toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.toolbar input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #e1e5eb;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.toolbar input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.toolbar button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.toolbar button:not(.danger) {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.toolbar button:not(.danger):hover {
+    background: #e5e7eb;
+}
+
+.toolbar button.danger {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.toolbar button.danger:hover {
+    background: #fecaca;
+}
+
+.documents-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e1e5eb;
+    border-radius: 12px;
+    background: #f9fafb;
+}
+
+.document-item {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e1e5eb;
+    background: white;
+}
+
+.document-item:last-child {
+    border-bottom: none;
+}
+
+.document-item:hover {
+    background: #f3f4f6;
+}
+
+.document-item h4 {
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.document-item p {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.loading {
+    text-align: center;
+    color: #6b7280;
+    padding: 40px;
+}
+
+.no-documents {
+    text-align: center;
+    color: #9ca3af;
+    padding: 40px;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .tab-btn {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .tab-content {
+        padding: 15px;
+    }
+    
+    .upload-box {
+        padding: 40px 20px;
+    }
+    
+    .toolbar {
+        flex-wrap: wrap;
+    }
+    
+    .toolbar button {
+        flex: 1;
+    }
+}
