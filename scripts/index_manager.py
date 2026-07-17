@@ -24,7 +24,8 @@ class IndexManager:
         if section_header not in content:
             content += f"\n{section_header}\n"
         
-        if entry_line in content:
+        if f"]({file_path})" in content:
+            self.update_entry(file_path, summary)
             return
         
         lines = content.split('\n')

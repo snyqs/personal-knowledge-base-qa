@@ -120,11 +120,16 @@ async def ask_question(question: str = Form(...)):
 @app.delete("/api/documents/{file_path:path}")
 async def delete_document(file_path: str):
     try:
-        kb.remove_document(file_path)
-        return JSONResponse(content={
-            "status": "success",
-            "message": f"文档 {file_path} 已删除"
-        })
+        success = kb.remove_document(file_path)
+        if success:
+            return JSONResponse(content={
+                "status": "success",
+                "message": f"文档 {file_path} 已删除"
+            })
+        else:
+            raise HTTPException(status_code=404, detail=f"文档 {file_path} 不存在")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"删除失败: {str(e)}")
 

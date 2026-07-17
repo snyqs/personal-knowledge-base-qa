@@ -197,21 +197,32 @@ class LLMSummaryService:
     
     def _rule_based_keywords(self, question: str) -> list:
         keywords = []
-        chinese_keywords = []
         
         import re
-        words = re.findall(r'[\u4e00-\u9fff]{2,}', question)
-        chinese_keywords.extend(words)
         
         english_words = re.findall(r'[a-zA-Z][a-zA-Z0-9_.-]*[a-zA-Z0-9]', question)
         english_words = [w for w in english_words if len(w) >= 3]
-        chinese_keywords.extend(english_words)
-        
-        for kw in chinese_keywords[:5]:
+        for kw in english_words[:3]:
             if kw not in keywords:
                 keywords.append(kw)
         
-        return keywords[:3]
+        chinese_chars = re.findall(r'[\u4e00-\u9fff]', question)
+        if chinese_chars:
+            bigrams = []
+            for i in range(len(chinese_chars) - 1):
+                bigrams.append(chinese_chars[i] + chinese_chars[i+1])
+            
+            trigrams = []
+            for i in range(len(chinese_chars) - 2):
+                trigrams.append(chinese_chars[i] + chinese_chars[i+1] + chinese_chars[i+2])
+            
+            candidate_keywords = trigrams + bigrams
+            
+            for kw in candidate_keywords:
+                if kw not in keywords and len(keywords) < 5:
+                    keywords.append(kw)
+        
+        return keywords[:5]
 
     def generate_answer(self, question: str, context: str) -> str:
         if not self.use_ollama or not self._ollama_available:

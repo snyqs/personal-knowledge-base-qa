@@ -122,10 +122,16 @@ class KnowledgeBase:
         if not keyword_set:
             return matched_files
         
-        for root, dirs, files in os.walk(self.user_data_path):
-            for file in files:
+        valid_extensions = {'pdf', 'docx', 'pptx', 'xlsx'}
+        
+        for ext in valid_extensions:
+            ext_dir = os.path.join(self.user_data_path, ext)
+            if not os.path.exists(ext_dir):
+                continue
+            
+            for file in os.listdir(ext_dir):
                 if file.endswith('.md'):
-                    file_path = os.path.join(root, file)
+                    file_path = os.path.join(ext_dir, file)
                     try:
                         with open(file_path, 'r', encoding='utf-8') as f:
                             content = f.read().lower()
@@ -136,16 +142,8 @@ class KnowledgeBase:
                                 match_count += content.count(kw)
                         
                         if match_count > 0:
-                            relative_path = os.path.relpath(file_path, self.user_data_path).replace('\\', '/')
-                            ext = relative_path.split('/')[0]
                             original_filename = os.path.splitext(file)[0]
-                            original_ext = {
-                                'pdf': '.pdf',
-                                'docx': '.docx',
-                                'pptx': '.pptx',
-                                'xlsx': '.xlsx'
-                            }.get(ext, '.md')
-                            file_path_in_index = f"{ext}/{original_filename}{original_ext}"
+                            file_path_in_index = f"{ext}/{original_filename}.{ext}"
                             matched_files.append((file_path_in_index, match_count))
                     except Exception as e:
                         print(f"读取文件失败 {file_path}: {str(e)}")
@@ -153,6 +151,64 @@ class KnowledgeBase:
         matched_files.sort(key=lambda x: x[1], reverse=True)
         
         return [f[0] for f in matched_files[:5]]
+    
+    def _extract_context_around_keywords(self, content: str, keywords: list, window_size: int = 500) -> str:
+        if not keywords:
+            return content[:3000]
+        
+        keyword_lower = [k.lower() for k in keywords if k.strip()]
+        content_lower = content.lower()
+        
+        relevant_positions = []
+        for kw in keyword_lower:
+            start = 0
+            while True:
+                pos = content_lower.find(kw, start)
+                if pos == -1:
+                    break
+                relevant_positions.append(pos)
+                start = pos + len(kw)
+        
+        if not relevant_positions:
+            return content[:3000]
+        
+        relevant_positions.sort()
+        
+        segments = []
+        used_ranges = []
+        
+        for pos in relevant_positions:
+            start = max(0, pos - window_size)
+            end = min(len(content), pos + window_size)
+            
+            overlap = False
+            for us_start, us_end in used_ranges:
+                if not (end < us_start or start > us_end):
+                    overlap = True
+                    break
+            
+            if not overlap:
+                segments.append((start, end))
+                used_ranges.append((start, end))
+        
+        segments.sort(key=lambda x: x[0])
+        
+        merged_segments = []
+        for seg in segments:
+            if not merged_segments:
+                merged_segments.append(seg)
+            else:
+                last_start, last_end = merged_segments[-1]
+                if seg[0] <= last_end:
+                    merged_segments[-1] = (last_start, max(last_end, seg[1]))
+                else:
+                    merged_segments.append(seg)
+        
+        result_parts = []
+        for start, end in merged_segments:
+            result_parts.append(content[start:end])
+        
+        return '\n\n'.join(result_parts)[:5000]
 
     def smart_ask(self, question: str) -> Dict:
         index_path = os.path.join(self.user_data_path, "index.md")
@@ -170,12 +226,20 @@ class KnowledgeBase:
         selected_files = self.llm_service.select_relevant_files(index_content, question)
         
         if not selected_files:
-            keywords = self.llm_service.extract_keywords(question, index_content)
-            print(f"LLM文件选择失败，使用关键词检索: {keywords}")
+            llm_keywords = self.llm_service.extract_keywords(question, index_content)
+            print(f"LLM文件选择失败，使用LLM关键词检索: {llm_keywords}")
             
-            if keywords:
-                selected_files = self._search_by_keywords(keywords)
-                print(f"关键词检索结果: {selected_files}")
+            if llm_keywords:
+                selected_files = self._search_by_keywords(llm_keywords)
+                print(f"LLM关键词检索结果: {selected_files}")
+            
+            if not selected_files:
+                rule_keywords = self.llm_service._rule_based_keywords(question)
+                print(f"LLM关键词检索失败，使用规则式关键词检索: {rule_keywords}")
+                
+                if rule_keywords:
+                    selected_files = self._search_by_keywords(rule_keywords)
+                    print(f"规则式关键词检索结果: {selected_files}")
         
         if not selected_files:
             return {
@@ -187,6 +251,7 @@ class KnowledgeBase:
         
         context_parts = []
         sources = []
+        all_keywords = self.llm_service._rule_based_keywords(question)
         
         for file_path in selected_files:
             md_path = os.path.join(self.user_data_path, file_path.replace('.pdf', '.md').replace('.docx', '.md').replace('.pptx', '.md').replace('.xlsx', '.md'))
@@ -195,11 +260,34 @@ class KnowledgeBase:
                 with open(md_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                context_parts.append(f"【{file_path}】\n{content[:3000]}")
+                context_segment = self._extract_context_around_keywords(content, all_keywords)
+                context_parts.append(f"【{file_path}】\n{context_segment}")
                 sources.append({
                     "file_name": os.path.basename(file_path),
                     "file_path": file_path
                 })
+            else:
+                print(f"文件不存在: {md_path}")
+        
+        if not context_parts:
+            print(f"未找到任何有效文件，尝试规则式关键词回退")
+            rule_keywords = self.llm_service._rule_based_keywords(question)
+            fallback_files = self._search_by_keywords(rule_keywords)
+            print(f"规则式关键词回退检索结果: {fallback_files}")
+            
+            for file_path in fallback_files:
+                md_path = os.path.join(self.user_data_path, file_path.replace('.pdf', '.md').replace('.docx', '.md').replace('.pptx', '.md').replace('.xlsx', '.md'))
+                
+                if os.path.exists(md_path):
+                    with open(md_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    context_segment = self._extract_context_around_keywords(content, rule_keywords)
+                    context_parts.append(f"【{file_path}】\n{context_segment}")
+                    sources.append({
+                        "file_name": os.path.basename(file_path),
+                        "file_path": file_path
+                    })
         
         if not context_parts:
             return {
